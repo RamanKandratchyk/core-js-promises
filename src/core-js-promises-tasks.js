@@ -110,11 +110,10 @@ function getAllOrNothing(promises) {
  * [Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)] => Promise fulfilled with [1, 2, 3]
  * [Promise.resolve(1), Promise.reject(2), Promise.resolve(3)]  => Promise fulfilled with [1, null, 3]
  */
-function getAllResult(promises) {
-  return Promise.allSettled(promises).then((results) =>
-    results.map((result) =>
-      result.status === 'rejected' ? null : result.value
-    )
+async function getAllResult(promises) {
+  const results = await Promise.allSettled(promises);
+  return results.map((result) =>
+    result.status === 'rejected' ? null : result.value
   );
 }
 
@@ -136,8 +135,27 @@ function getAllResult(promises) {
  * [promise1, promise4, promise3] => Promise.resolved('104030')
  * [promise1, promise4, promise3, promise2] => Promise.resolved('10403020')
  */
-function queuPromises(/* promises */) {
-  throw new Error('Not implemented');
+async function queuPromises(promises) {
+  const results = [];
+  let rest = promises.length;
+
+  return new Promise((resolve) => {
+    promises.forEach((promise, index) => {
+      promise.then((result) => {
+        results.push({ value: result.toString(), index });
+
+        rest -= 1;
+
+        if (rest === 0)
+          resolve(
+            results
+              .sort((a, b) => a.index - b.index)
+              .map((res) => res.value)
+              .join('')
+          );
+      });
+    });
+  });
 }
 
 module.exports = {
